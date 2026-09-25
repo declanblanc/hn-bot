@@ -1,8 +1,5 @@
 import { fetchTopStories } from './hn.js';
-import { buildPayload, formatWeek, postWithThread } from './discord.js';
-import { identify } from './gateway.js';
-
-const THREAD_MESSAGE = 'Want to chat about an article? Use this thread!';
+import { buildPayload, postToWebhook } from './discord.js';
 
 function lastWeekStartUtc() {
   const d = new Date();
@@ -11,14 +8,13 @@ function lastWeekStartUtc() {
   return d.toISOString().slice(0, 10);
 }
 
-const token = process.env.DISCORD_BOT_TOKEN;
-const channelId = process.env.DISCORD_CHANNEL_ID;
+const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
 const weekStart = process.env.WEEK_START || lastWeekStartUtc();
 const count = Number(process.env.STORY_COUNT) || 10;
 const dryRun = process.argv.includes('--dry-run');
 
-if ((!token || !channelId) && !dryRun) {
-  console.error('Set DISCORD_BOT_TOKEN and DISCORD_CHANNEL_ID, or pass --dry-run to print the payload instead.');
+if (!webhookUrl && !dryRun) {
+  console.error('DISCORD_WEBHOOK_URL is not set. Pass --dry-run to print the payload instead.');
   process.exit(1);
 }
 
@@ -29,10 +25,6 @@ const payload = buildPayload(weekStart, stories);
 if (dryRun) {
   console.log(JSON.stringify(payload, null, 2));
 } else {
-  await identify(token);
-  await postWithThread(token, channelId, payload, {
-    threadName: `Week of ${formatWeek(weekStart)}`,
-    threadMessage: THREAD_MESSAGE,
-  });
+  await postToWebhook(webhookUrl, payload);
   console.log(`Posted ${stories.length} stories for the week of ${weekStart}`);
 }
