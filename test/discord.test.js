@@ -12,17 +12,13 @@ const story = {
   discussionUrl: 'https://news.ycombinator.com/item?id=1',
 };
 
-test('formats a story as a markdown link with stats', () => {
-  assert.equal(
-    formatStory(story, 3),
-    '**3. [Show HN: \\[Beta\\] my\\_project](https://example.com/)** (example.com)\n' +
-      '42 points · [1 comment](https://news.ycombinator.com/item?id=1)',
-  );
+test('formats a story as a linked title with points', () => {
+  assert.equal(formatStory(story, 3), '3. [Show HN: \\[Beta\\] my\\_project](https://example.com/) (42 Points)');
+  assert.equal(formatStory({ ...story, points: 1 }, 1), '1. [Show HN: \\[Beta\\] my\\_project](https://example.com/) (1 Point)');
 });
 
-test('omits points and site when absent', () => {
-  const line = formatStory({ ...story, points: null, site: null }, 1);
-  assert.match(line, /\)\*\*\n\[1 comment\]/);
+test('omits points when absent', () => {
+  assert.equal(formatStory({ ...story, points: null }, 1), '1. [Show HN: \\[Beta\\] my\\_project](https://example.com/)');
 });
 
 test('builds an embed titled with the week', () => {

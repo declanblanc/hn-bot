@@ -18,12 +18,8 @@ function plural(n, word) {
 
 export function formatStory(story, rank) {
   const title = escapeMarkdown(truncate(story.title, MAX_TITLE));
-  const site = story.site ? ` (${story.site})` : '';
-  const stats = [
-    story.points !== null && plural(story.points, 'point'),
-    `[${plural(story.comments, 'comment')}](${story.discussionUrl})`,
-  ].filter(Boolean);
-  return `**${rank}. [${title}](${story.url})**${site}\n${stats.join(' · ')}`;
+  const points = story.points !== null ? ` (${plural(story.points, 'Point')})` : '';
+  return `${rank}. [${title}](${story.url})${points}`;
 }
 
 export function buildPayload(weekStart, stories) {
@@ -36,7 +32,7 @@ export function buildPayload(weekStart, stories) {
 
   let description = '';
   for (const [i, story] of stories.entries()) {
-    const entry = (description ? '\n\n' : '') + formatStory(story, i + 1);
+    const entry = (description ? '\n' : '') + formatStory(story, i + 1);
     if (description.length + entry.length > MAX_DESCRIPTION) break;
     description += entry;
   }
