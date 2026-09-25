@@ -1,4 +1,4 @@
-import { frontPageUrl } from './hn.js';
+import { browseUrl } from './hn.js';
 
 const HN_ORANGE = 0xff6600;
 const MAX_DESCRIPTION = 4096;
@@ -26,9 +26,8 @@ export function formatStory(story, rank) {
   return `**${rank}. [${title}](${story.url})**${site}\n${stats.join(' · ')}`;
 }
 
-export function buildPayload(day, stories) {
-  const date = new Date(`${day}T00:00:00Z`).toLocaleDateString('en-US', {
-    weekday: 'long',
+export function buildPayload(weekStart, stories) {
+  const date = new Date(`${weekStart}T00:00:00Z`).toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
@@ -45,8 +44,8 @@ export function buildPayload(day, stories) {
   return {
     embeds: [
       {
-        title: `Top Hacker News stories for ${date}`,
-        url: frontPageUrl(day),
+        title: `Top Hacker News stories for the week of ${date}`,
+        url: browseUrl(weekStart),
         color: HN_ORANGE,
         description,
       },

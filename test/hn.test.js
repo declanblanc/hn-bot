@@ -1,52 +1,59 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import { fetchFrontPage, parseFrontPage } from '../src/hn.js';
+import { fetchTopStories, parseHits, searchUrl, weekRange } from '../src/hn.js';
 
-const html = await readFile(new URL('./fixtures/front.html', import.meta.url), 'utf8');
-const stories = parseFrontPage(html);
+const hits = [
+  {
+    objectID: '101',
+    title: 'Rust & "Go" – a comparison',
+    url: 'https://www.example.com/a?x=1&y=2',
+    points: 758,
+    num_comments: 782,
+  },
+  { objectID: '102', title: 'Ask HN: What are you working on?', url: null, points: 1, num_comments: null },
+];
 
-test('parses every story row', () => {
-  assert.deepEqual(stories.map((s) => s.id), ['101', '102', '103', '104']);
+test('spans Monday 00:00 UTC to the next Monday', () => {
+  const { start, end } = weekRange('2026-09-14');
+  assert.equal(new Date(start * 1000).toISOString(), '2026-09-14T00:00:00.000Z');
+  assert.equal(new Date(end * 1000).toISOString(), '2026-09-21T00:00:00.000Z');
 });
 
-test('decodes entities in titles and URLs', () => {
-  assert.equal(stories[0].title, 'Rust & "Go" – a comparison');
-  assert.equal(stories[0].url, 'https://example.com/a?x=1&y=2');
+test('filters the search to the week', () => {
+  const params = new URL(searchUrl('2026-09-14', 10)).searchParams;
+  assert.equal(params.get('tags'), 'story');
+  assert.equal(params.get('numericFilters'), 'created_at_i>=1789344000,created_at_i<1789948800');
+  assert.equal(params.get('hitsPerPage'), '10');
 });
 
-test('reads points, comments, and site', () => {
-  assert.equal(stories[0].points, 758);
-  assert.equal(stories[0].comments, 782);
-  assert.equal(stories[0].site, 'example.com');
-  assert.equal(stories[0].discussionUrl, 'https://news.ycombinator.com/item?id=101');
+test('maps link posts', () => {
+  const [story] = parseHits(hits);
+  assert.deepEqual(story, {
+    id: '101',
+    title: 'Rust & "Go" – a comparison',
+    url: 'https://www.example.com/a?x=1&y=2',
+    site: 'example.com',
+    points: 758,
+    comments: 782,
+    discussionUrl: 'https://news.ycombinator.com/item?id=101',
+  });
 });
 
-test('resolves self posts to absolute HN URLs', () => {
-  assert.equal(stories[1].url, 'https://news.ycombinator.com/item?id=102');
-  assert.equal(stories[1].site, null);
-  assert.equal(stories[1].points, 1);
-  assert.equal(stories[1].comments, 0);
-});
-
-test('handles job posts without a score', () => {
-  assert.equal(stories[2].points, null);
-  assert.equal(stories[2].comments, 0);
-});
-
-test('handles moderation markers before the title link', () => {
-  assert.equal(stories[3].title, 'Duplicate story');
-  assert.equal(stories[3].url, 'https://example.net/');
+test('points self posts at the HN discussion', () => {
+  const [, story] = parseHits(hits);
+  assert.equal(story.url, 'https://news.ycombinator.com/item?id=102');
+  assert.equal(story.site, null);
+  assert.equal(story.comments, 0);
 });
 
 test('retries rate-limited requests', async (t) => {
-  const responses = [new Response('', { status: 429 }), new Response(html)];
+  const responses = [new Response('', { status: 429 }), Response.json({ hits })];
   t.mock.method(globalThis, 'fetch', async () => responses.shift());
-  const result = await fetchFrontPage('2026-09-23', { delayMs: 0 });
-  assert.equal(result.length, 4);
+  const result = await fetchTopStories('2026-09-14', 10, { delayMs: 0 });
+  assert.equal(result.length, 2);
 });
 
 test('fails fast on client errors', async (t) => {
-  t.mock.method(globalThis, 'fetch', async () => new Response('', { status: 404 }));
-  await assert.rejects(fetchFrontPage('2026-09-23', { delayMs: 0 }), /404/);
+  t.mock.method(globalThis, 'fetch', async () => new Response('', { status: 400 }));
+  await assert.rejects(fetchTopStories('2026-09-14', 10, { delayMs: 0 }), /400/);
 });

@@ -25,15 +25,15 @@ test('omits points and site when absent', () => {
   assert.match(line, /\)\*\*\n\[1 comment\]/);
 });
 
-test('builds an embed titled with the day', () => {
-  const { embeds } = buildPayload('2026-09-23', [story]);
-  assert.equal(embeds[0].title, 'Top Hacker News stories for Wednesday, September 23, 2026');
-  assert.equal(embeds[0].url, 'https://news.ycombinator.com/front?day=2026-09-23');
+test('builds an embed titled with the week', () => {
+  const { embeds } = buildPayload('2026-09-14', [story]);
+  assert.equal(embeds[0].title, 'Top Hacker News stories for the week of September 14, 2026');
+  assert.match(embeds[0].url, /^https:\/\/hn\.algolia\.com\/\?dateRange=custom&dateStart=1789344000&/);
 });
 
 test('keeps the description within the Discord limit', () => {
   const long = { ...story, title: 'x'.repeat(500) };
-  const { embeds } = buildPayload('2026-09-23', Array(30).fill(long));
+  const { embeds } = buildPayload('2026-09-14', Array(30).fill(long));
   assert.ok(embeds[0].description.length <= 4096);
   assert.ok(!embeds[0].description.endsWith('\n'));
 });
