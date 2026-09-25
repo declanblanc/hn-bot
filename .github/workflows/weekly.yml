@@ -21,6 +21,7 @@ jobs:
       - run: npm test
       - run: npm start
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_CHANNEL_ID: ${{ vars.DISCORD_CHANNEL_ID }}
           STORY_COUNT: ${{ vars.STORY_COUNT }}
           WEEK_START: ${{ inputs.week_start }}
