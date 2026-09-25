@@ -40,10 +40,16 @@ export function parseFrontPage(html) {
   });
 }
 
-export async function fetchFrontPage(day) {
-  const res = await fetch(frontPageUrl(day), {
-    headers: { 'User-Agent': 'hn-discord-bot' },
-  });
-  if (!res.ok) throw new Error(`HN returned ${res.status} for ${day}`);
-  return parseFrontPage(await res.text());
+export async function fetchFrontPage(day, { retries = 3, delayMs = 30_000 } = {}) {
+  for (let attempt = 0; ; attempt++) {
+    const res = await fetch(frontPageUrl(day), {
+      headers: { 'User-Agent': 'hn-discord-bot' },
+    });
+    if (res.ok) return parseFrontPage(await res.text());
+    const retryable = res.status === 429 || res.status >= 500;
+    if (!retryable || attempt >= retries) {
+      throw new Error(`HN returned ${res.status} for ${day}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, delayMs * 2 ** attempt));
+  }
 }

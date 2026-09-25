@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { parseFrontPage } from '../src/hn.js';
+import { fetchFrontPage, parseFrontPage } from '../src/hn.js';
 
 const html = await readFile(new URL('./fixtures/front.html', import.meta.url), 'utf8');
 const stories = parseFrontPage(html);
@@ -37,4 +37,16 @@ test('handles job posts without a score', () => {
 test('handles moderation markers before the title link', () => {
   assert.equal(stories[3].title, 'Duplicate story');
   assert.equal(stories[3].url, 'https://example.net/');
+});
+
+test('retries rate-limited requests', async (t) => {
+  const responses = [new Response('', { status: 429 }), new Response(html)];
+  t.mock.method(globalThis, 'fetch', async () => responses.shift());
+  const result = await fetchFrontPage('2026-09-23', { delayMs: 0 });
+  assert.equal(result.length, 4);
+});
+
+test('fails fast on client errors', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => new Response('', { status: 404 }));
+  await assert.rejects(fetchFrontPage('2026-09-23', { delayMs: 0 }), /404/);
 });
