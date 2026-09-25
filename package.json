@@ -1,0 +1,14 @@
+{
+  "name": "hn-bot",
+  "version": "1.0.0",
+  "description": "Posts the previous day's top Hacker News stories to Discord",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test"
+  }
+}
