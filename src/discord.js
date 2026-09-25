@@ -1,5 +1,7 @@
 import { browseUrl } from './hn.js';
 
+const API = 'https://discord.com/api/v10';
+const USER_AGENT = 'DiscordBot (https://github.com/declanblanc/hn-bot, 1.0.0)';
 const HN_ORANGE = 0xff6600;
 const MAX_DESCRIPTION = 4096;
 const MAX_TITLE = 200;
@@ -26,14 +28,16 @@ export function formatStory(story, rank) {
   return `**${rank}. [${title}](${story.url})**${site}\n${stats.join(' · ')}`;
 }
 
-export function buildPayload(weekStart, stories) {
-  const date = new Date(`${weekStart}T00:00:00Z`).toLocaleDateString('en-US', {
+export function formatWeek(weekStart) {
+  return new Date(`${weekStart}T00:00:00Z`).toLocaleDateString('en-US', {
     month: 'long',
     day: 'numeric',
     year: 'numeric',
     timeZone: 'UTC',
   });
+}
 
+export function buildPayload(weekStart, stories) {
   let description = '';
   for (const [i, story] of stories.entries()) {
     const entry = (description ? '\n\n' : '') + formatStory(story, i + 1);
@@ -44,7 +48,7 @@ export function buildPayload(weekStart, stories) {
   return {
     embeds: [
       {
-        title: `Top Hacker News stories for the week of ${date}`,
+        title: `Top Hacker News stories for the week of ${formatWeek(weekStart)}`,
         url: browseUrl(weekStart),
         color: HN_ORANGE,
         description,
@@ -54,13 +58,28 @@ export function buildPayload(weekStart, stories) {
   };
 }
 
-export async function postToWebhook(webhookUrl, payload) {
-  const res = await fetch(webhookUrl, {
+async function discordRequest(token, path, body) {
+  const res = await fetch(`${API}${path}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    headers: {
+      Authorization: `Bot ${token}`,
+      'Content-Type': 'application/json',
+      'User-Agent': USER_AGENT,
+    },
+    body: JSON.stringify(body),
   });
   if (!res.ok) {
-    throw new Error(`Discord returned ${res.status}: ${await res.text()}`);
+    throw new Error(`Discord returned ${res.status} for ${path}: ${await res.text()}`);
   }
+  return res.json();
+}
+
+export async function postWithThread(token, channelId, payload, { threadName, threadMessage }) {
+  const message = await discordRequest(token, `/channels/${channelId}/messages`, payload);
+  const thread = await discordRequest(token, `/channels/${channelId}/messages/${message.id}/threads`, {
+    name: threadName,
+    auto_archive_duration: 10080,
+  });
+  await discordRequest(token, `/channels/${thread.id}/messages`, { content: threadMessage });
+  return { message, thread };
 }
