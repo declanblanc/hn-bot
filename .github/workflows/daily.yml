@@ -1,0 +1,26 @@
+name: Post top HN stories
+
+on:
+  schedule:
+    - cron: '0 14 * * *'
+  workflow_dispatch:
+    inputs:
+      day:
+        description: 'Day to post (YYYY-MM-DD). Defaults to yesterday in UTC.'
+        required: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - run: npm test
+      - run: npm start
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          STORY_COUNT: ${{ vars.STORY_COUNT }}
+          HN_DAY: ${{ inputs.day }}
