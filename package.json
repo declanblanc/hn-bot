@@ -1,7 +1,7 @@
 {
   "name": "hn-bot",
   "version": "1.0.0",
-  "description": "Posts the previous day's top Hacker News stories to Discord",
+  "description": "Posts last week's top Hacker News stories to Discord",
   "type": "module",
   "private": true,
   "engines": {

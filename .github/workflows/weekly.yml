@@ -2,11 +2,11 @@ name: Post top HN stories
 
 on:
   schedule:
-    - cron: '0 14 * * *'
+    - cron: '0 14 * * 1'
   workflow_dispatch:
     inputs:
-      day:
-        description: 'Day to post (YYYY-MM-DD). Defaults to yesterday in UTC.'
+      week_start:
+        description: 'Monday of the week to post (YYYY-MM-DD). Defaults to last week in UTC.'
         required: false
 
 jobs:
@@ -23,4 +23,4 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           STORY_COUNT: ${{ vars.STORY_COUNT }}
-          HN_DAY: ${{ inputs.day }}
+          WEEK_START: ${{ inputs.week_start }}
