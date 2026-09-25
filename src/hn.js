@@ -24,7 +24,7 @@ export function parseFrontPage(html) {
   const chunks = html.split(/<tr class="athing[^"]*" id="/).slice(1);
   return chunks.map((chunk) => {
     const id = chunk.match(/^(\d+)"/)[1];
-    const link = chunk.match(/<span class="titleline"><a href="([^"]*)"[^>]*>(.*?)<\/a>/);
+    const link = chunk.match(/<span class="titleline">[^<]*<a href="([^"]*)"[^>]*>(.*?)<\/a>/);
     const site = chunk.match(/<span class="sitestr">(.*?)<\/span>/);
     const score = chunk.match(/<span class="score"[^>]*>(\d+) points?<\/span>/);
     const comments = chunk.match(/>(\d+)&nbsp;comments?<\/a>/);

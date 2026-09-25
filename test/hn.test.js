@@ -7,7 +7,7 @@ const html = await readFile(new URL('./fixtures/front.html', import.meta.url), '
 const stories = parseFrontPage(html);
 
 test('parses every story row', () => {
-  assert.deepEqual(stories.map((s) => s.id), ['101', '102', '103']);
+  assert.deepEqual(stories.map((s) => s.id), ['101', '102', '103', '104']);
 });
 
 test('decodes entities in titles and URLs', () => {
@@ -32,4 +32,9 @@ test('resolves self posts to absolute HN URLs', () => {
 test('handles job posts without a score', () => {
   assert.equal(stories[2].points, null);
   assert.equal(stories[2].comments, 0);
+});
+
+test('handles moderation markers before the title link', () => {
+  assert.equal(stories[3].title, 'Duplicate story');
+  assert.equal(stories[3].url, 'https://example.net/');
 });
