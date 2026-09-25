@@ -1,8 +1,8 @@
 # hn-bot
 
-Posts the previous day's top [Hacker News](https://news.ycombinator.com/front) stories to a Discord channel once a day.
+Posts last week's top [Hacker News](https://news.ycombinator.com/) stories to a Discord channel every Monday.
 
-The bot reads `news.ycombinator.com/front?day=YYYY-MM-DD` and posts the stories as one embed through a Discord webhook. It has no dependencies and needs no always-on server.
+The bot queries the [HN Search API](https://hn.algolia.com/api) for stories posted Monday through Sunday (UTC), ranks them by points, and posts them as one embed through a Discord webhook. It has no dependencies and needs no always-on server.
 
 ## Setup
 
@@ -25,16 +25,16 @@ The bot reads `news.ycombinator.com/front?day=YYYY-MM-DD` and posts the stories 
 | --------------------- | ----------------- | ----------------------------- |
 | `DISCORD_WEBHOOK_URL` | required          | Webhook to post to            |
 | `STORY_COUNT`         | `10`              | Number of stories to post     |
-| `HN_DAY`              | yesterday (UTC)   | Day to post, as `YYYY-MM-DD`  |
+| `WEEK_START`          | last week (UTC)   | Monday of the week to post, as `YYYY-MM-DD` |
 
 ## Deployment
 
-[.github/workflows/daily.yml](.github/workflows/daily.yml) runs the bot every day at 14:00 UTC.
+[.github/workflows/weekly.yml](.github/workflows/weekly.yml) runs the bot every Monday at 14:00 UTC.
 
 1. Push this repository to GitHub.
 2. Add the webhook URL as the `DISCORD_WEBHOOK_URL` repository secret.
 3. Optional: set a `STORY_COUNT` repository variable.
-4. To test, run the workflow from the **Actions** tab. You can pass a specific day.
+4. To test, run the workflow from the **Actions** tab. You can pass a specific week.
 
 GitHub disables scheduled workflows after 60 days without repository activity. Re-enable the workflow from the **Actions** tab if that happens.
 
